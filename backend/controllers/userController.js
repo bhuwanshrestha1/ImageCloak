@@ -33,7 +33,7 @@ const createUser = asyncHandler(async (req, res) => {
       _id: newUser._id,
       username: newUser.username,
       fullname: newUser.fullname,
-      emai: newUser.email,
+      email: newUser.email,
       password: newUser.password,
       isAdmin: newUser.isAdmin,
 
@@ -51,6 +51,10 @@ const loginUser = asyncHandler (async (req,res) => {
   const {username , password} = req.body
 
   const existingUser = await User.findOne({username})
+
+  if (!existingUser) {
+    return res.status(400).json({ error: "Invalid username or password" });
+  }
 
     if(existingUser){
       const isPasswordValid = await bcrypt.compare(password,existingUser.password)
@@ -119,10 +123,12 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
   if (user) {
     user.username = req.body.username || user.username;
     user.email = req.body.email || user.email; 
+    user.fullname = req.body.fullname || user.fullname; 
 
-    if (req.body.password) {
+    // Only hash new password if it is provided
+    if (req.body.newPassword) {
       const salt = await bcrypt.genSalt(12);
-      user.password = await bcrypt.hash(req.body.password, salt);
+      user.password = await bcrypt.hash(req.body.newPassword, salt);
     }
 
     const updatedUser = await user.save();
@@ -131,6 +137,7 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       username: updatedUser.username,
       email: updatedUser.email,
+      password: updatedUser.password,
       isAdmin: updatedUser.isAdmin,
     });
   } else {
@@ -138,6 +145,7 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 });
+
 
 const deleteUserById = asyncHandler(async(req,res) => {
   const user = await User.findById(req.params.id)

@@ -15,7 +15,7 @@ import { authenticate,authorizeAdmin } from "../models/authMiddleware.js";
 
 const router = express.Router();
 
-router.route('/').post (createUser).get(authenticate, authorizeAdmin, getAllUsers);
+router.route('/').post (createUser).get(authenticate, getAllUsers);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 

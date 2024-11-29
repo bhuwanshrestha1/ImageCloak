@@ -9,6 +9,8 @@ import { useAuthContext } from './context/AuthContext';
 import Profile from './pages/profile/Profile';
 import TextEncode from './pages/textencode/TextEncode';
 import ImageEncode from './pages/imageencode/ImageEncode';
+import AudiEncode from './pages/audioencode/AudiEncode';
+import ShareImage from './pages/shareimages/ShareImage';
 
 function App() {
   const {authUser} = useAuthContext();
@@ -21,6 +23,8 @@ function App() {
         <Route path="/profile" element={authUser? <Profile/>: <Navigate to ={'/login'} /> } />
         <Route path="/textencode" element={authUser? <TextEncode/>: <Navigate to ={'/login'} /> } />
         <Route path="/imageencode" element={authUser? <ImageEncode/>: <Navigate to ={'/login'} /> } />
+        <Route path="/audioencode" element={authUser? <AudiEncode/>: <Navigate to ={'/login'} /> } />
+        <Route path="/shareimage" element={authUser? <ShareImage/>: <Navigate to ={'/login'} /> } />
       </Routes>
       <Toaster/>
     </Router>
