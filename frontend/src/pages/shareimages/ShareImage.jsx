@@ -2,206 +2,161 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../../components/navbar/Navbar";
 import Sidebar from "../../components/sidebar/Sidebar";
 import axios from "axios";
-import { FaTimes } from "react-icons/fa"; // Import clear icon from react-icons
+import { FiDownload } from "react-icons/fi";
 
 const ShareImage = () => {
-  const [users, setUsers] = useState([]); // State to hold the list of users
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
-  const [searchTerm, setSearchTerm] = useState(""); // State for the search input
-  const [showUsers, setShowUsers] = useState(false); // State to control whether to show users
-  const [selectedUser, setSelectedUser] = useState(null); // State for the selected user in the chat
-  const [messages, setMessages] = useState([]); // State to hold chat messages (images only)
-  const [selectedImage, setSelectedImage] = useState(null); // State to store the selected image before sending
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [message, setMessage] = useState("");
+  const [image, setImage] = useState(null);
+  const [messages, setMessages] = useState([]);
 
-  // Fetching the users when the component mounts
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchCurrentUser = async () => {
       try {
-        const { data } = await axios.get("/api/users"); // Get all users from the API
-        setUsers(data); // Update users state with the fetched data
-        setLoading(false); // Set loading to false once data is fetched
+        const { data } = await axios.get("/api/users/profile");
+        setCurrentUser(data);
       } catch (err) {
-        setError(err.response?.data?.message || "An error occurred"); // Handle errors
-        setLoading(false); // Set loading to false on error
+        setError("Failed to fetch current user");
       }
     };
 
-    fetchUsers(); // Call the fetch function
-  }, []); // Empty dependency array ensures this runs once on component mount
+    const fetchUsers = async () => {
+      try {
+        const { data } = await axios.get("/api/users");
+        setUsers(data);
+      } catch (err) {
+        setError("Failed to fetch users");
+      }
+      setLoading(false);
+    };
 
-  // Filtering users based on the search term (email in this case)
-  const filteredUsers = users.filter(user =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    fetchCurrentUser().then(fetchUsers);
+  }, []);
 
-  // Handle image upload for chat
-  const handleImageSend = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result); // Store the selected image
-      };
-      reader.readAsDataURL(file); // Read the image file as a data URL
-    } else {
-      alert("Please upload a valid image.");
-    }
-  };
-
-  // Handle sending the image as a message
-  const handleSendMessage = () => {
-    if (selectedImage && selectedUser) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { image: selectedImage, sender: "You" },
-      ]);
-      setSelectedImage(null); // Reset the selected image after sending
-    } else {
-      alert("Please select an image and a user to send the message.");
-    }
-  };
-
-  // Handle resetting the image
-  const handleResetImage = () => {
-    setSelectedImage(null); // Reset the selected image
-  };
-
-  // Clear the selected user when the search term is cleared
   useEffect(() => {
-    if (!searchTerm) {
-      setSelectedUser(null); // Reset selected user when search term is cleared
+    if (selectedUser) {
+      fetchMessages();
     }
-  }, [searchTerm]);
+  }, [selectedUser]);
 
-  // Loading, error, and data rendering logic
+  const fetchMessages = async () => {
+    try {
+      const { data } = await axios.get(`/api/messages/${selectedUser._id}`);
+      setMessages(data);
+    } catch (err) {
+      setError("Failed to fetch messages");
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!selectedUser) return alert("Please select a user to send a message.");
+
+    const formData = new FormData();
+    formData.append("message", message);
+    if (image) formData.append("image", image);
+
+    try {
+      await axios.post(`/api/messages/send/${selectedUser._id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setMessage("");
+      setImage(null);
+      fetchMessages(); // Refresh messages after sending
+    } catch (err) {
+      alert("Failed to send message");
+    }
+  };
+
+  const filteredUsers = users.filter((user) => user._id !== currentUser?._id && !user.isAdmin);
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const handleImageDownload = (imageUrl) => {
+    if (!imageUrl) return;
+    const a = document.createElement('a');
+    a.href = imageUrl;
+    a.download = imageUrl.split('/').pop();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <>
-      <Navbar /> {/* Include Navbar */}
-      <div className="flex bg-gray-900 min-h-screen" style={{ height: "100vh" }}>
+      <Navbar />
+      <div className="flex bg-gray-900 min-h-screen">
         <Sidebar />
-        <div className="flex-1 p-8 text-white">
-          <div className="max-w-4xl mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
-            <h1 className="text-2xl font-bold mb-4">All Users</h1>
-            {/* Search Bar */}
-            <div className="mb-4 relative">
-              <input
-                type="text"
-                placeholder="Search by email"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="p-2 bg-gray-700 text-white rounded w-full"
-                onFocus={() => setShowUsers(false)} // Hide users when focusing on the input
-              />
-              {/* Clear Icon */}
-              {searchTerm && (
-                <FaTimes
-                  className="absolute right-2 top-2 text-white cursor-pointer"
-                  onClick={() => setSearchTerm("")} // Clear searchTerm on click
-                />
-              )}
-            </div>
-
-            {/* Only show users after clicking "Show Users" button */}
-            {showUsers && searchTerm && filteredUsers.length === 0 && (
-              <p className="text-gray-300">No users found.</p>
-            )}
-
-            {/* Show users list */}
-            {showUsers && searchTerm && filteredUsers.length > 0 && (
-              <ul className="space-y-2">
-                {filteredUsers.map((user) => (
-                  <li
-                    key={user._id}
-                    className="p-4  rounded-lg shadow hover:bg-gray-500 transition cursor-pointer"
-                    onClick={() => setSelectedUser(user)} // Select user to start chat
-                  >
-                    <p><strong>Username:</strong> {user.username}</p>
-                    <p><strong>Full Name:</strong> {user.fullname}</p>
-                    <p><strong>Email:</strong> {user.email}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Show "Show Users" button only after entering search term */}
-            {searchTerm && !showUsers && (
-              <div className="mt-4">
-                <button
-                  onClick={() => setShowUsers(true)} // Show users when the button is clicked
-                  className="bg-blue-500 text-white p-2 rounded-lg"
-                >
-                  Show Users
-                </button>
+        <div className="flex-1 flex p-8 text-white">
+          {/* Users List */}
+          <div className="w-1/3 bg-gray-800 p-4 rounded-lg overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">Users</h2>
+            {filteredUsers.map((user) => (
+              <div
+                key={user._id}
+                className={`p-3 mb-2 rounded cursor-pointer ${selectedUser?._id === user._id ? 'bg-blue-600' : 'bg-gray-700'}`}
+                onClick={() => setSelectedUser(user)}
+              >
+                {user.username} ({user.email})
               </div>
-            )}
-
-            {/* Chat Interface for selected user */}
-            {selectedUser && (
-              <div className="mt-8">
-                <h2 className="text-xl font-bold">Chat with {selectedUser.username}</h2>
-                <div className="mt-4 bg-gray-700 p-4 rounded-lg h-64 overflow-auto">
-                  {/* Display sent images */}
-                  {messages.length === 0 ? (
-                    <p className="text-gray-300">No messages yet. Send an image to start the chat.</p>
-                  ) : (
-                    messages.map((msg, index) => (
-                      <div key={index} className="mb-4">
-                        <p className="font-semibold text-white">{msg.sender}</p>
-                        <img
-                          src={msg.image}
-                          alt="Sent Image"
-                          className="w-48 h-48 object-cover rounded-lg"
-                        />
+            ))}
+          </div>
+          {/* Conversation Section */}
+          <div className="w-2/3 bg-gray-800 p-8 rounded-lg ml-4 flex flex-col">
+            {selectedUser ? (
+              <>
+                <h2 className="text-xl font-bold mb-4">Chat with {selectedUser.username}</h2>
+                <div className="h-80 overflow-y-auto p-4 bg-gray-700 rounded mb-4 flex flex-col">
+                  {messages.length > 0 ? (
+                    messages.map((msg) => (
+                      <div
+                        key={msg._id}
+                        className={`p-3 mb-2 rounded max-w-xs ${msg.senderId === currentUser?._id ? 'bg-blue-500 ml-auto text-right' : 'bg-gray-600 text-left'}`}
+                      >
+                        <p className="text-sm font-bold">{msg.senderId === currentUser?._id ? 'You' : selectedUser.username}</p>
+                        <p className="mt-1">{msg.message}</p>
+                        {msg.image && (
+                          <div className="mt-2 flex items-center">
+                            <img src={msg.image} alt="Sent" className="w-32 rounded" />
+                            <button
+                              onClick={() => handleImageDownload(msg.image)}
+                              className="ml-2 text-blue-300 hover:text-blue-500"
+                            >
+                              <FiDownload className="h-5 w-5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))
-                  )}
-
-                  {/* Display the selected image inside the message box as preview */}
-                  {selectedImage && (
-                    <div className="mt-4">
-                      <p className="text-white">Your Image Preview:</p>
-                      <img
-                        src={selectedImage}
-                        alt="Preview"
-                        className="w-48 h-48 object-cover rounded-lg"
-                      />
-                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400">Send a message to start the conversation</div>
                   )}
                 </div>
-
-                {/* Image upload input */}
-                <div className="mt-4">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSend}
-                    className="bg-gray-700 text-white p-2 rounded-lg"
-                  />
-                </div>
-
-                {/* Send and Reset buttons */}
-                <div className="mt-4 flex gap-4">
-                  {/* Send Button */}
-                  <button
-                    onClick={handleSendMessage}
-                    className="bg-green-500 text-white p-2 rounded-lg"
-                  >
-                    Send Image
-                  </button>
-
-                  {/* Reset Button */}
-                  <button
-                    onClick={handleResetImage}
-                    className="bg-red-500 text-white p-2 rounded-lg"
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
+                <textarea
+                  className="w-full p-2 bg-gray-700 rounded mb-2"
+                  placeholder="Type your message..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImage(e.target.files[0])}
+                  className="w-full p-2 bg-gray-700 rounded mb-2"
+                />
+                <button
+                  className="bg-blue-500 px-4 py-2 rounded text-white"
+                  onClick={handleSendMessage}
+                >
+                  Send Message
+                </button>
+              </>
+            ) : (
+              <div className="text-center text-gray-400">Select a user to start chatting</div>
             )}
           </div>
         </div>

@@ -1,23 +1,27 @@
 import mongoose from "mongoose";
 
-const conversationSchema = new mongoose.Schema({
-    participants:[
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref:'User',
-        },
+const conversationSchema = new mongoose.Schema(
+  {
+    participants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
     ],
-    message:[
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref:"Message",
-            default:[],
-        },
+    messages: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message',
+        default: [],  // Ensures that the messages array is empty if no messages are present
+      },
     ],
-},
-{timestamps:true}
+  },
+  {
+    timestamps: true,
+  }
 );
 
-const Conversation = mongoose.model("Conversation",conversationSchema);
+// Create an index on participants to speed up queries for finding conversations
+conversationSchema.index({ participants: 1 });
 
-export default Conversation;
+export default mongoose.model("Conversation", conversationSchema);

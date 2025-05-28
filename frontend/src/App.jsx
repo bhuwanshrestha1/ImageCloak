@@ -11,6 +11,8 @@ import TextEncode from './pages/textencode/TextEncode';
 import ImageEncode from './pages/imageencode/ImageEncode';
 import AudiEncode from './pages/audioencode/AudiEncode';
 import ShareImage from './pages/shareimages/ShareImage';
+import Uploadfiles from './pages/uploadfiles/Uploadfiles';
+import AdminDash from './pages/adminDash/AdminDash';
 
 function App() {
   const {authUser} = useAuthContext();
@@ -25,6 +27,8 @@ function App() {
         <Route path="/imageencode" element={authUser? <ImageEncode/>: <Navigate to ={'/login'} /> } />
         <Route path="/audioencode" element={authUser? <AudiEncode/>: <Navigate to ={'/login'} /> } />
         <Route path="/shareimage" element={authUser? <ShareImage/>: <Navigate to ={'/login'} /> } />
+        <Route path="/upload" element={authUser? <Uploadfiles/>: <Navigate to ={'/login'} /> } />
+        <Route path="/admin-dash" element={authUser?.isAdmin ? <AdminDash /> : <Navigate to={'/'} />} /> {/* Admin route */}
       </Routes>
       <Toaster/>
     </Router>
