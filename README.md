@@ -81,7 +81,11 @@ Certificate-based user access control
 
 Advanced steganalysis detection countermeasures
 # 📸 Screenshots
-(Insert screenshots showing UI of encoding, decoding, contact list, and file sharing features)
+![image](https://github.com/user-attachments/assets/442a69dc-039f-40ce-90c4-b680f7608461)
+![image](https://github.com/user-attachments/assets/258c5c00-aaff-48d1-82a4-505126948446)
+![image](https://github.com/user-attachments/assets/5212e026-cf45-4b52-9a8f-f881661f65b3)
+![image](https://github.com/user-attachments/assets/8b6f7b26-fc17-4aca-8be2-63e8dff7869d)
+
 
 # 📚 Learning Outcomes
 Applied CNNs for real-world information security applications
