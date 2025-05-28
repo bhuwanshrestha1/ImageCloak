@@ -85,6 +85,8 @@ Advanced steganalysis detection countermeasures
 ![image](https://github.com/user-attachments/assets/258c5c00-aaff-48d1-82a4-505126948446)
 ![image](https://github.com/user-attachments/assets/5212e026-cf45-4b52-9a8f-f881661f65b3)
 ![image](https://github.com/user-attachments/assets/8b6f7b26-fc17-4aca-8be2-63e8dff7869d)
+![image](https://github.com/user-attachments/assets/caab9ca5-fe0b-4d34-9238-a7869a7fa77b)
+![image](https://github.com/user-attachments/assets/12c8b931-f5a1-4a73-9a07-cd13d1e4d066)
 
 
 # 📚 Learning Outcomes
